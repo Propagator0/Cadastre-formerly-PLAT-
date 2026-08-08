@@ -28,8 +28,13 @@ interface CubeProps {
   colorblindMode: boolean;
   highlighted: boolean;
   showStackNumber: boolean;
-  onSelect: () => void;
-  onHover: (h: boolean) => void;
+  // These carry the cube's identity rather than closing over it. A parent
+  // mapping over 84 cubes cannot useCallback per item, so a `() => void` here
+  // forced a fresh closure per cube per render — which silently defeated the
+  // memo() below and made every camera nudge re-render the whole city. The
+  // cube already knows its districtId and path, so it can say who it is.
+  onSelect: (districtId: string, path: string) => void;
+  onHover: (districtId: string, path: string, hovered: boolean) => void;
 }
 
 const E = CUBE * UNIT; // cube edge in px
@@ -195,10 +200,10 @@ function CubeImpl({
         }}
         onClick={(e) => {
           e.stopPropagation();
-          onSelect();
+          onSelect(districtId, cube.path);
         }}
-        onPointerEnter={() => onHover(true)}
-        onPointerLeave={() => onHover(false)}
+        onPointerEnter={() => onHover(districtId, cube.path, true)}
+        onPointerLeave={() => onHover(districtId, cube.path, false)}
         // NOTE: do NOT add an onContextMenu={(e) => e.preventDefault()} here.
         // Radix's ContextMenuTrigger (via asChild) composes its own
         // onContextMenu handler with any prop handler — and composeEventHandlers

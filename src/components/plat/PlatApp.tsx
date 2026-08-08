@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { usePlat, statusCounts } from '@/lib/plat/store';
+import { useShallow } from 'zustand/react/shallow';
 import {
   STATUS,
   STATUS_LABEL,
@@ -62,7 +63,24 @@ const STATUS_DOT: Record<Status, string> = {
 export function PlatApp() {
   const init = usePlat((s) => s.init);
   const tower = usePlat((s) => s.tower);
-  const view = usePlat((s) => s.view);
+  // Only the toggles this chrome actually reads — deliberately NOT yaw/pitch/
+  // zoom. Selecting the whole `view` object meant the header, footer, legends
+  // and help dialog were all rebuilt on every frame of an orbit drag, which
+  // is most of a codebase's worth of JSX for a camera the toolbar can't see.
+  // useShallow keeps the `view.x` call sites below working unchanged.
+  const view = usePlat(
+    useShallow((s) => ({
+      separated: s.view.separated,
+      focusStratum: s.view.focusStratum,
+      focusDistrict: s.view.focusDistrict,
+      showCables: s.view.showCables,
+      colorblindMode: s.view.colorblindMode,
+      gridSnap: s.view.gridSnap,
+      theme: s.view.theme,
+      showStackNumbers: s.view.showStackNumbers,
+      cableKinds: s.view.cableKinds,
+    })),
+  );
   const setSeparated = usePlat((s) => s.setSeparated);
   const toggleCables = usePlat((s) => s.toggleCables);
   const focusStratum = usePlat((s) => s.focusStratum);

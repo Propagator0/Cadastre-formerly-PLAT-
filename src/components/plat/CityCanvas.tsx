@@ -92,6 +92,21 @@ export function CityCanvas() {
     [setCamera],
   );
 
+  // Stable identities for the two callbacks handed down to every building and
+  // every cube. These MUST NOT be inline arrows: DistrictBuilding and Cube are
+  // both memo()'d, and a fresh closure on each render makes that memo a no-op,
+  // so a single degree of orbit re-rendered all 10 buildings and 84 cubes.
+  // selectCube / setHovered come from the store and are already stable.
+  const handleSelect = useCallback(
+    (districtId: string, path: string) => selectCube({ districtId, path }),
+    [selectCube],
+  );
+  const handleHover = useCallback(
+    (districtId: string, path: string, isHovered: boolean) =>
+      setHovered(isHovered ? { districtId, path } : null),
+    [setHovered],
+  );
+
   const onPointerUp = useCallback((e: React.PointerEvent) => {
     dragRef.current = null;
     setDragging(false);
@@ -483,8 +498,8 @@ export function CityCanvas() {
               colorblindMode={view.colorblindMode}
               query={q}
               showStackNumbers={view.showStackNumbers}
-              onSelect={(districtId, path) => selectCube({ districtId, path })}
-              onHover={setHovered}
+              onSelect={handleSelect}
+              onHover={handleHover}
             />
           );
         })}

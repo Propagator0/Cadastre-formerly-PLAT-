@@ -19,7 +19,10 @@ const STATUS_COLOR: Record<Status, string> = {
 
 export function CityHealth() {
   const tower = usePlat((s) => s.tower);
-  const view = usePlat((s) => s.view);
+  // Select the one field this panel reads, not the whole `view` object —
+  // `view` is rebuilt on every camera move, so subscribing to it re-rendered
+  // this dashboard on every frame of an orbit drag.
+  const showCables = usePlat((s) => s.view.showCables);
 
   const counts = statusCounts(tower);
   const totalCubes = tower.districts.reduce((n, d) => n + d.files.filter(f => f.status !== 'removed').length, 0);
@@ -294,7 +297,7 @@ export function CityHealth() {
       </div>
 
       {/* Wiring summary */}
-      {view.showCables && (
+      {showCables && (
         <div style={{
           borderTop: '1px solid rgba(255,255,255,0.08)',
           marginTop: 5,

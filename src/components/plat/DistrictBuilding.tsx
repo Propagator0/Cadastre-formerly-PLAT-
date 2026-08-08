@@ -21,7 +21,10 @@ interface BuildingProps {
   query: string;
   showStackNumbers: boolean;
   onSelect: (districtId: string, path: string) => void;
-  onHover: (ref: { districtId: string; path: string } | null) => void;
+  // Takes the cube's identity plus whether it's now hovered, so this component
+  // can hand the callback straight to each Cube instead of wrapping it in a
+  // fresh closure per file (which defeated Cube's memo).
+  onHover: (districtId: string, path: string, hovered: boolean) => void;
 }
 
 const E = CUBE * UNIT;
@@ -122,7 +125,10 @@ function BuildingImpl({
           pointerEvents: 'none',
           opacity: dimmed ? 0 : 0.85,
           transition: 'opacity 380ms ease',
-          filter: 'blur(2px)',
+          // No filter: blur() here. This element sits inside the preserve-3d
+          // world, so a filter forces it onto its own layer and re-rasterises
+          // every frame the camera moves — ten of them, once per district. The
+          // gradient's own falloff (transparent by 85%) already reads as soft.
         }}
       />
       {/* ambient glow ring — a subtle district-colored ring on the ground that
@@ -234,10 +240,8 @@ function BuildingImpl({
               colorblindMode={colorblindMode}
               highlighted={matchesQuery}
               showStackNumber={showStackNumbers}
-              onSelect={() => onSelect(district.id, f.path)}
-              onHover={(h) =>
-                onHover(h ? { districtId: district.id, path: f.path } : null)
-              }
+              onSelect={onSelect}
+              onHover={onHover}
             />
           );
         })}
@@ -327,7 +331,13 @@ function BuildingImpl({
             letterSpacing: '0.08em',
             textTransform: 'uppercase',
             color: ink,
-            background: districtFocused ? `${district.color}30` : `${district.color}22`,
+            // The district tint layered over the theme's label plate. This
+            // used to be a bare 13%-alpha tint made legible by a backdrop
+            // blur — but a backdrop-filter inside the preserve-3d world forces
+            // the compositor to re-read and re-blur the city behind it on
+            // every camera frame, ten times over. An opaque plate underneath
+            // does the same job for the reader and costs nothing to move.
+            background: `linear-gradient(0deg, ${district.color}${districtFocused ? '30' : '22'}, ${district.color}${districtFocused ? '30' : '22'}), ${labelBg}`,
             border: `1px solid ${districtFocused ? district.color : `${district.color}55`}`,
             borderRadius: 3,
             padding: '3px 8px',
@@ -335,8 +345,6 @@ function BuildingImpl({
             display: 'inline-flex',
             alignItems: 'center',
             gap: 5,
-            backdropFilter: 'blur(6px)',
-            WebkitBackdropFilter: 'blur(6px)',
             boxShadow: districtFocused
               ? `0 0 12px ${district.color}40, 0 0 4px ${district.color}20`
               : `0 2px 8px ${ink}15`,
@@ -400,8 +408,9 @@ function BuildingImpl({
             border: `0.5px solid ${district.color}40`,
             borderRadius: 3,
             boxShadow: `0 2px 6px ${ink}22, inset 0 0 0 0.5px ${ink}33`,
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)',
+            // No backdrop blur: `labelBg` is already a 91%-opaque plate, so
+            // there was never anything visible behind this to blur — it was
+            // paying full compositor price for an invisible effect.
           }}
         >
           {/* stratum color ribbon — the district's stratum assignment at a glance */}

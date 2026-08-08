@@ -1,2 +1,14 @@
 # Ignore dependencies
 node_modules/
+
+# Next.js build output
+.next/
+
+# TypeScript incremental build cache
+tsconfig.tsbuildinfo
+
+# Dev/server logs
+*.log
+
+# Editor
+.vscode/

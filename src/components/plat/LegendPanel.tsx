@@ -18,7 +18,9 @@ const STATUS_COLOR: Record<Status, string> = {
 const STATUS_ORDER: Status[] = ['done', 'in_progress', 'stuck', 'planned', 'abandoned'];
 
 export function LegendPanel() {
-  const view = usePlat((s) => s.view);
+  // (No view subscription: this panel is static chrome. It used to select the
+  // whole `view` object and never read it, which re-rendered the entire legend
+  // on every camera frame because `view` is a fresh object each time.)
 
   return (
     <div

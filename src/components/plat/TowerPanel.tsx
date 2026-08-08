@@ -1,6 +1,7 @@
 'use client';
 
 import { usePlat, districtProgress, statusCounts } from '@/lib/plat/store';
+import { useShallow } from 'zustand/react/shallow';
 import {
   STATUS,
   STATUS_LABEL,
@@ -223,7 +224,16 @@ export function TowerPanel() {
   const setQuery = usePlat((s) => s.setQuery);
   const statusFilter = usePlat((s) => s.statusFilter);
   const toggleStatusFilter = usePlat((s) => s.toggleStatusFilter);
-  const view = usePlat((s) => s.view);
+  // Same reasoning as PlatApp: this panel renders every district and all 84
+  // file rows, and none of it depends on the camera. Selecting whole `view`
+  // rebuilt the entire tree on every frame of an orbit drag.
+  const view = usePlat(
+    useShallow((s) => ({
+      separated: s.view.separated,
+      focusStratum: s.view.focusStratum,
+      showCables: s.view.showCables,
+    })),
+  );
   const setSeparated = usePlat((s) => s.setSeparated);
   // Was selecting the action, not the state — so `active` below was always
   // false and no stratum button ever lit up.
