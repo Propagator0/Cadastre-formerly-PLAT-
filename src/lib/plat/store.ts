@@ -19,6 +19,7 @@ import {
 } from '@/lib/plat/types';
 import { defaultTower } from '@/lib/plat/seed';
 import { deriveLinks, linksForCube, Link } from '@/lib/plat/wiring';
+import { PITCH_MIN, PITCH_MAX, normalizeYaw } from '@/lib/plat/iso';
 import {
   Part,
   PartKind,
@@ -116,6 +117,9 @@ interface PlatState {
   toggleCables: () => void;
   setCamera: (p: Partial<Pick<ViewState, 'yaw' | 'pitch' | 'zoom'>>) => void;
   animateCamera: (target: Partial<Pick<ViewState, 'yaw' | 'pitch' | 'zoom'>>) => void;
+  // Small, repeatable camera deltas — arrow keys and the gizmo's nudge ring.
+  // Complements drag-orbit, which is fast but imprecise.
+  nudgeCamera: (d: { dYaw?: number; dPitch?: number; dZoom?: number }) => void;
   setQuery: (q: string) => void;
   toggleStatusFilter: (s: Status) => void;
   clearActivity: () => void;
@@ -1103,12 +1107,31 @@ export const usePlat = create<PlatState>((set, get) => ({
     }
   },
 
-  setCamera: (p) => set((s) => ({ view: { ...s.view, ...p } })),
+  setCamera: (p) =>
+    set((s) => {
+      const next = { ...s.view, ...p };
+      // Normalize yaw to [-180, 180] so the readout stays clean and orbiting
+      // doesn't accumulate to yaw=720 after a few spins. Free orbit is
+      // preserved — this only affects the stored number, not the view.
+      if (p.yaw !== undefined) next.yaw = normalizeYaw(next.yaw);
+      return { view: next };
+    }),
 
   // Animated camera: ease the camera toward a target over ~600ms. Cancels any
   // in-flight animation so rapid preset clicks don't fight each other.
   animateCamera: (target) => {
     const start = { ...get().view };
+    // Pick the shortest angular path for yaw so the camera doesn't spin the
+    // long way around when, e.g., current=170 and target=-170 (only 20° apart
+    // via the wraparound, but 340° if interpolated linearly).
+    let yawTarget = target.yaw;
+    if (yawTarget !== undefined) {
+      yawTarget = normalizeYaw(yawTarget);
+      let delta = yawTarget - start.yaw;
+      if (delta > 180) delta -= 360;
+      else if (delta < -180) delta += 360;
+      yawTarget = start.yaw + delta;
+    }
     const t0 = performance.now();
     const DURATION = 620;
     // Track the latest animation id so a later call can cancel an earlier one.
@@ -1122,15 +1145,29 @@ export const usePlat = create<PlatState>((set, get) => ({
       const t = Math.min(1, (performance.now() - t0) / DURATION);
       const e = ease(t);
       const next = {
-        yaw: target.yaw !== undefined ? start.yaw + (target.yaw - start.yaw) * e : start.yaw,
+        yaw: yawTarget !== undefined ? start.yaw + (yawTarget - start.yaw) * e : start.yaw,
         pitch: target.pitch !== undefined ? start.pitch + (target.pitch - start.pitch) * e : start.pitch,
         zoom: target.zoom !== undefined ? start.zoom + (target.zoom - start.zoom) * e : start.zoom,
       };
       set((s) => ({ view: { ...s.view, ...next } }));
       if (t < 1) requestAnimationFrame(tick);
+      else {
+        // Normalize the final yaw so the stored value stays in [-180, 180].
+        set((s) => ({ view: { ...s.view, yaw: normalizeYaw(s.view.yaw) } }));
+      }
     };
     requestAnimationFrame(tick);
   },
+
+  // Nudge the camera by a small delta — arrow keys and the gizmo nudge ring.
+  // Clamps pitch to the guardrails and normalizes yaw.
+  nudgeCamera: (d) =>
+    set((s) => {
+      const yaw = normalizeYaw(s.view.yaw + (d.dYaw ?? 0));
+      const pitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, s.view.pitch + (d.dPitch ?? 0)));
+      const zoom = Math.max(0.5, Math.min(1.9, s.view.zoom + (d.dZoom ?? 0)));
+      return { view: { ...s.view, yaw, pitch, zoom } };
+    }),
 
   setQuery: (q) => set({ query: q }),
 

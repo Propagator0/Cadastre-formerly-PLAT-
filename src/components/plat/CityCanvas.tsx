@@ -8,6 +8,8 @@ import {
   worldTransform,
   scenePerspective,
   projectPoint,
+  PITCH_MIN,
+  PITCH_MAX,
 } from '@/lib/plat/iso';
 import { STRATA, stratumOf } from '@/lib/plat/types';
 import { INK, PAPER, PAPER_DARK } from '@/lib/plat/color';
@@ -80,8 +82,15 @@ export function CityCanvas() {
       if (!d) return;
       const dx = e.clientX - d.x;
       const dy = e.clientY - d.y;
-      let yaw = d.yaw + dx * 0.4;
-      const pitch = Math.max(22, Math.min(78, d.pitch + dy * 0.3));
+      // Small deadzone so a click without intent to drag doesn't jitter the
+      // view by a fraction of a degree.
+      if (Math.abs(dx) < 2 && Math.abs(dy) < 2) return;
+      // Softer multipliers (0.30 / 0.22, down from 0.40 / 0.30) make the drag
+      // feel less twitchy — the previous values sent the view spinning on a
+      // quick flick. The lower yaw multiplier especially helps because yaw
+      // rotation is visually dramatic (the whole city spins).
+      let yaw = d.yaw + dx * 0.30;
+      const pitch = Math.max(PITCH_MIN, Math.min(PITCH_MAX, d.pitch + dy * 0.22));
       // Grid-snap: round yaw to nearest 45° increment when gridSnap is on.
       // Makes screenshots cleaner and views repeatable.
       if (usePlat.getState().view.gridSnap) {
@@ -125,6 +134,51 @@ export function CityCanvas() {
     [view.zoom, setCamera],
   );
 
+  // Keyboard arrow navigation for fine camera control. Arrow keys nudge
+  // yaw/pitch; +/- nudge zoom. This complements drag-orbit (fast but
+  // imprecise) with a precise, repeatable nudge. Attached to window so the
+  // keys work even when focus is on a sidebar button.
+  const nudgeCamera = usePlat((s) => s.nudgeCamera);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (
+        e.target instanceof HTMLInputElement ||
+        e.target instanceof HTMLTextAreaElement
+      )
+        return;
+      // Don't hijack arrow keys if a modifier is held (let the browser do its
+      // thing — e.g. shift+arrow for selection).
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      switch (e.key) {
+        case 'ArrowLeft':
+          nudgeCamera({ dYaw: -5 });
+          break;
+        case 'ArrowRight':
+          nudgeCamera({ dYaw: 5 });
+          break;
+        case 'ArrowUp':
+          nudgeCamera({ dPitch: 3 });
+          break;
+        case 'ArrowDown':
+          nudgeCamera({ dPitch: -3 });
+          break;
+        case '+':
+        case '=':
+          nudgeCamera({ dZoom: 0.08 });
+          break;
+        case '-':
+        case '_':
+          nudgeCamera({ dZoom: -0.08 });
+          break;
+        default:
+          return;
+      }
+      e.preventDefault();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [nudgeCamera]);
+
   const focus = view.focusStratum;
   const focusDist = view.focusDistrict;
   const q = query.trim().toLowerCase();
@@ -147,7 +201,10 @@ export function CityCanvas() {
         overflow: 'hidden',
         background: `radial-gradient(ellipse at 50% 35%, ${theme.bg[0]} 0%, ${theme.bg[1]} 60%, ${theme.bg[2]} 100%)`,
         cursor: dragging ? 'grabbing' : 'grab',
-        perspective: scenePerspective(),
+        // Perspective scales with zoom so the foreshortening ratio stays
+        // constant — see projectPoint in iso.ts. Without this the city
+        // squeezes flat as you zoom out and bulges as you zoom in.
+        perspective: scenePerspective(view.zoom),
         perspectiveOrigin: '50% 42%',
         touchAction: 'none',
         // expose theme colors as CSS vars so children (DistrictBuilding labels,
@@ -498,6 +555,15 @@ export function CityCanvas() {
               colorblindMode={view.colorblindMode}
               query={q}
               showStackNumbers={view.showStackNumbers}
+              // The camera, so the label can counter-rotate to face it. Passed
+              // as props rather than CSS custom properties on the canvas root:
+              // a custom property change invalidates style for every element
+              // that inherits it (~1300 here), which measured 5x more style
+              // recalc per drag than re-rendering these 10 memo'd buildings.
+              // The 84 cubes underneath still don't re-render — their props
+              // are unchanged, so Cube's memo holds.
+              yaw={view.yaw}
+              pitch={view.pitch}
               onSelect={handleSelect}
               onHover={handleHover}
             />

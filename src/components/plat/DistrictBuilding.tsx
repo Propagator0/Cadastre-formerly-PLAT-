@@ -3,7 +3,7 @@
 import { memo } from 'react';
 import { District } from '@/lib/plat/types';
 import { stratumOf, STRATA } from '@/lib/plat/types';
-import { CUBE, UNIT } from '@/lib/plat/iso';
+import { CUBE, UNIT, billboardRotation } from '@/lib/plat/iso';
 import { themeOf } from '@/lib/plat/theme';
 import { usePlat } from '@/lib/plat/store';
 import { Cube } from './Cube';
@@ -20,6 +20,10 @@ interface BuildingProps {
   colorblindMode: boolean;
   query: string;
   showStackNumbers: boolean;
+  // Camera angles, used only to counter-rotate the floating label so it keeps
+  // facing the viewer. See the billboard block below.
+  yaw: number;
+  pitch: number;
   onSelect: (districtId: string, path: string) => void;
   // Takes the cube's identity plus whether it's now hovered, so this component
   // can hand the callback straight to each Cube instead of wrapping it in a
@@ -42,6 +46,8 @@ function BuildingImpl({
   colorblindMode,
   query,
   showStackNumbers,
+  yaw,
+  pitch,
   onSelect,
   onHover,
 }: BuildingProps) {
@@ -304,10 +310,15 @@ function BuildingImpl({
         })()}
       </div>
 
-      {/* label billboard — floats above the building. Wrapped in a single
-          solid-background plate so the multi-row label never collides with
-          cables or other labels — the whole label group reads as one
-          anchored tag, not a stack of floating text fragments. */}
+      {/* label billboard — floats above the building. Two layers:
+          (1) an outer positioner that translates up to the top of the stack
+              and animates smoothly when section mode lifts the stratum;
+          (2) an inner billboard that counter-rotates the world's yaw+pitch so
+              the label always faces the camera and stays upright from any
+              orbit angle. That is what stops labels turning sideways.
+
+          The inner layer has NO transition: it must track the camera
+          instantly, or the labels lag and swim while you drag. */}
       <div
         style={{
           position: 'absolute',
@@ -316,9 +327,16 @@ function BuildingImpl({
           transform: `translate3d(0, ${-(lift + district.files.length * CUBE + 0.9) * UNIT}px, 0)`,
           transition: 'transform 620ms cubic-bezier(.2,.7,.2,1), opacity 380ms ease',
           pointerEvents: 'none',
+          opacity: dimmed ? 0.18 : 1,
+          transformStyle: 'preserve-3d',
+        }}
+      >
+      <div
+        style={{
+          transform: billboardRotation({ yaw, pitch }),
           textAlign: 'center',
           whiteSpace: 'nowrap',
-          opacity: dimmed ? 0.18 : 1,
+          transformStyle: 'preserve-3d',
         }}
       >
         {/* name badge — the primary identifier. Drawn first so the plate
@@ -503,6 +521,7 @@ function BuildingImpl({
             ))}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
