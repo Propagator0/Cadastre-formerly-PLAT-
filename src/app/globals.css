@@ -1,0 +1,257 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* PLAT — custom animations */
+@keyframes plat-load-slide {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(200%); }
+  100% { transform: translateX(-100%); }
+}
+
+@keyframes plat-cable-dash {
+  to { stroke-dashoffset: -20; }
+}
+
+@keyframes plat-glow-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes plat-build-drop {
+  0% { transform: translateY(-40px); opacity: 0; }
+  60% { transform: translateY(4px); opacity: 1; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes plat-ambient-breathe {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.75; }
+}
+
+@keyframes plat-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes plat-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* search highlight pulse — a soft yellow glow that breathes around
+   cubes whose path matches the current search query */
+@keyframes plat-highlight-pulse {
+  0%, 100% {
+    box-shadow: 0 0 8px #ffd27a66, 0 0 16px #ffd27a33, inset 0 0 4px #ffd27a22;
+    opacity: 0.7;
+  }
+  50% {
+    box-shadow: 0 0 16px #ffd27aaa, 0 0 32px #ffd27a66, inset 0 0 8px #ffd27a44;
+    opacity: 1;
+  }
+}
+
+/* context-menu pop-in */
+@keyframes plat-ctx-pop {
+  0% { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* cube drag pick-up: a tiny lift indicator */
+@keyframes plat-drag-lift {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-2px); }
+}
+
+/* rewind glow on activity timeline entries */
+@keyframes plat-rewind-pulse {
+  0%, 100% { box-shadow: 0 0 0 1px #6aa0d855, 0 0 8px #6aa0d833; }
+  50% { box-shadow: 0 0 0 1px #6aa0d8aa, 0 0 16px #6aa0d866; }
+}
+
+/* hover-driven rewind pulse: applied to <li> entries in the activity
+   timeline that have a snapshot. Reuses the plat-rewind-pulse keyframes so
+   the rewind target glows blue while the cursor is over it. */
+.plat-rewind-pulse-on-hover:hover {
+  animation: plat-rewind-pulse 1.2s ease-in-out infinite;
+  border-radius: 2px;
+}
+
+/* cable flow pulse — a soft glow that travels along a cable path,
+   giving the impression of data flowing between layers */
+@keyframes plat-cable-flow {
+  0% { stroke-dashoffset: 0; }
+  100% { stroke-dashoffset: -30; }
+}
+
+/* building erect animation — when a district first appears, its
+   buildings rise from the ground with a satisfying spring */
+@keyframes plat-erect {
+  0% { transform: scaleY(0) translateY(20px); opacity: 0; }
+  60% { transform: scaleY(1.05) translateY(-2px); opacity: 1; }
+  100% { transform: scaleY(1) translateY(0); opacity: 1; }
+}
+
+/* progress arc spin — a subtle rotation on the progress indicator
+   that gives it a "loading" feel without being distracting */
+@keyframes plat-arc-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* health pulse — a gentle pulse on the health dashboard ring
+   when risk is non-zero */
+@keyframes plat-health-pulse {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.02); }
+}
+
+/* district cascade flash — when a district finishes building,
+   a brief flash highlights the entire district */
+@keyframes plat-district-flash {
+  0% { box-shadow: 0 0 0 0 rgba(232,169,58,0.6); }
+  50% { box-shadow: 0 0 30px 10px rgba(232,169,58,0.3); }
+  100% { box-shadow: 0 0 0 0 rgba(232,169,58,0); }
+}
+
+/* stratum zone breathe — a very subtle opacity pulse on the
+   ground plane stratum zones so they feel alive */
+@keyframes plat-zone-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* thin scrollbar styling for PLAT panels */
+.plat-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+.plat-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.plat-scroll::-webkit-scrollbar-track { background: transparent; }
+.plat-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.12);
+  border-radius: 3px;
+}
+.plat-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.22);
+}

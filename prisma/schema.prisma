@@ -1,0 +1,67 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// PLAT — the city mapped to tables.
+//
+// The tower is a singleton row (id = "singleton"). Districts are language
+// buildings; cubes are files. There is exactly one tower per database, so
+// districts reference it by the literal towerId "singleton" and cubes reference
+// their district by id. We don't use Prisma relations here on purpose: the
+// dataset is small (~90 cubes) and a full delete-and-reinsert on save is the
+// simplest correct strategy, which is easier to reason about than cascades.
+
+model TowerRecord {
+  id        String   @id @default("singleton")
+  name      String
+  created   DateTime
+  modified  DateTime
+  notepad   String   @default("")
+}
+
+model DistrictRecord {
+  id        String  @id
+  name      String
+  tag       String
+  color     String
+  note      String
+  anchorX   Float
+  anchorZ   Float
+  anchorRot Float
+  order     Int
+  towerId   String
+}
+
+model FileCubeRecord {
+  id         String  @id @default(cuid())
+  districtId String
+  path       String
+  status     String
+  progress   Int     @default(0)
+  notes      String  @default("")
+  // JSON-encoded string[] — SQLite primitives can't be lists, so we store the
+  // array as a JSON string and parse/serialize in code.
+  marks      String  @default("[]")
+  // JSON-encoded Part[] — same reason as marks: SQLite has no list type.
+  // Default "[]" means an existing row loads as a cube with no parts, and
+  // db-mapping synthesises a skeleton for it on read.
+  parts      String  @default("[]")
+  order      Int
+}
+
+// Snapshots — named bookmarks of tower state. The `data` column holds the full
+// Tower object as a JSON string so the user can rewind to a saved point.
+model SnapshotRecord {
+  id        String   @id @default(cuid())
+  name      String
+  data      String   // JSON-serialized Tower object
+  createdAt DateTime @default(now())
+}
